@@ -1,9 +1,12 @@
-//! The portfolio registry. Deliberately just the repos verified public and
-//! release-pipelined this session (plus a few known-public flagships from
-//! memory) rather than every repo in the ecosystem -- a private repo here
-//! would just make every command report "unknown," which is more confusing
-//! than a short, accurate list. Add entries as more repos get the full
-//! treatment and go public.
+//! The portfolio registry -- every public darkstardevx repo that's actually
+//! part of the Cybercore family (queried live via `gh api
+//! users/darkstardevx/repos`, not guessed from memory). Deliberately
+//! excludes: forks (OmNote), the profile README and hub-site repos
+//! (darkstardevx, darkstardevx.github.io -- not binary tools with
+//! releases), and ferraxis/vexlang (real projects, but a separate
+//! compiler/language-design line of work, not Cybercore). A private repo
+//! here would just make every command report "unknown," so keep this in
+//! sync with reality rather than adding speculatively.
 
 const REPOS: &[(&str, &str)] = &[
     ("echo", "darkstardevx/echo"),
@@ -16,6 +19,13 @@ const REPOS: &[(&str, &str)] = &[
     ("vortexwall", "darkstardevx/vortexwall"),
     ("aetherscope", "darkstardevx/aetherscope"),
     ("ghostport", "darkstardevx/ghostport"),
+    ("apexdaemon", "darkstardevx/apexdaemon"),
+    ("cybercore", "darkstardevx/cybercore"),
+    ("cyberdeck", "darkstardevx/cyberdeck"),
+    ("cyberplug", "darkstardevx/cyberplug"),
+    ("cyberplug-bar-widget", "darkstardevx/cyberplug-bar-widget"),
+    ("diagprint", "darkstardevx/diagprint"),
+    ("gateflow", "darkstardevx/gateflow"),
 ];
 
 pub fn resolve(name: &str) -> Option<&'static str> {
