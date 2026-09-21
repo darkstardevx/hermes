@@ -12,11 +12,13 @@ use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 pub struct Data {
     http: reqwest::Client,
     github_token: Option<String>,
+    started_at: Instant,
+    dev_log_enabled: bool,
 }
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
@@ -41,6 +43,39 @@ async fn status(ctx: Context<'_>) -> Result<(), Error> {
         .title("Cybercore portfolio -- CI status")
         .description(lines.join("\n"))
         .color(0x4d_a6_ff);
+    ctx.send(poise::CreateReply::default().embed(embed)).await?;
+    Ok(())
+}
+
+/// Lightweight operational health summary for the always-on deployment.
+#[poise::command(slash_command)]
+async fn health(ctx: Context<'_>) -> Result<(), Error> {
+    let data = ctx.data();
+    let uptime = data.started_at.elapsed().as_secs();
+    let hours = uptime / 3_600;
+    let minutes = (uptime % 3_600) / 60;
+    let seconds = uptime % 60;
+    let github_mode = if data.github_token.is_some() {
+        "authenticated GitHub API"
+    } else {
+        "unauthenticated public GitHub API"
+    };
+    let dev_log = if data.dev_log_enabled {
+        "enabled"
+    } else {
+        "disabled"
+    };
+
+    let embed = serenity::CreateEmbed::new()
+        .title("🪽 Hermes Watch health")
+        .description("Gateway command succeeded; Hermes is online and responding.")
+        .field("Uptime", format!("{hours}h {minutes}m {seconds}s"), true)
+        .field("GitHub", github_mode, true)
+        .field("#dev-log", dev_log, true)
+        .footer(serenity::CreateEmbedFooter::new(
+            "Hermes Watch • minimum access • no message reading",
+        ))
+        .color(0x35_d07f);
     ctx.send(poise::CreateReply::default().embed(embed)).await?;
     Ok(())
 }
@@ -673,11 +708,13 @@ async fn main() -> Result<(), anyhow::Error> {
         std::env::var("DEV_LOG_STATE_FILE")
             .unwrap_or_else(|_| ".hermes/dev-log-state.json".to_owned()),
     );
+    let dev_log_enabled = dev_log_channel.is_some();
 
     let intents = serenity::GatewayIntents::empty();
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
             commands: vec![
+                health(),
                 status(),
                 releases(),
                 project(),
@@ -705,6 +742,8 @@ async fn main() -> Result<(), anyhow::Error> {
                 Ok(Data {
                     http: reqwest::Client::new(),
                     github_token,
+                    started_at: Instant::now(),
+                    dev_log_enabled,
                 })
             })
         })

@@ -32,6 +32,7 @@ Production-ready exports live in [`assets/branding/`](assets/branding/):
 ## 🚀 Commands
 
 ```
+/health               uptime and safe operational configuration summary
 /status               CI status (pass/fail) across every tracked repo
 /releases <tool>      latest release + notes for one tool
 /project <tool>       live project card with release, CI, and links
@@ -40,6 +41,10 @@ Production-ready exports live in [`assets/branding/`](assets/branding/):
 /troubleshoot         private opt-in troubleshooting intake
 /tools                linked preview cards for the Cybercore toolchain
 /server-audit         private read-only channel layout and overlap audit
+
+Run the health command on the always-on host to confirm Hermes uptime, GitHub
+authentication mode, and whether the dev-log worker is enabled. It does not
+expose tokens or read messages.
 ```
 
 ## 🛰️ Scheduled `#dev-log`

@@ -66,6 +66,7 @@ Hermes keeps privileged message-content access disabled. Interactive features us
 ### 8. Dashboard — operations surface
 
 - [x] Dedicated Hermes Watch GitHub Page
+- [x] Lightweight health, uptime, and configuration summary
 - [ ] Read-only server/project dashboard
 - [ ] Health, rate-limit, and delivery metrics
 - [ ] Operator configuration view without message access
