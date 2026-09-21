@@ -1,5 +1,7 @@
 # 🪽 Hermes
 
+![Hermes Watch header](assets/branding/png/hermes-watch-header-1280x640.png)
+
 `Rust` · `poise` · `serenity`
 
 **Cybercore portfolio Discord bot.** Messenger-god name, messenger-god job:
@@ -14,6 +16,14 @@ The current visual direction is a god-like cyber-messenger mark: watchful,
 signal-driven, and built to fit the Cybercore design language.
 
 ![Hermes Watch logo concepts](assets/branding/hermes-watch-logo-concepts.png)
+
+Production-ready exports live in [`assets/branding/`](assets/branding/):
+
+- [`svg/hermes-watch-mark.svg`](assets/branding/svg/hermes-watch-mark.svg) — scalable master mark
+- [`png/hermes-watch-avatar-1024.png`](assets/branding/png/hermes-watch-avatar-1024.png) — Discord avatar
+- [`png/hermes-watch-header-1280x640.png`](assets/branding/png/hermes-watch-header-1280x640.png) — README/GitHub header
+- [`png/hermes-watch-card-release-1200x675.png`](assets/branding/png/hermes-watch-card-release-1200x675.png) — release card
+- [`png/hermes-watch-card-status-1200x675.png`](assets/branding/png/hermes-watch-card-status-1200x675.png) — status card
 
 ## 🚀 Commands
 

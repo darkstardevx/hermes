@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title">
+  <title id="title">Hermes Watch release card</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0b0f1a"/><stop offset="1" stop-color="#1b1431"/></linearGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#13d9ff"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient>
+  </defs>
+  <rect width="1200" height="675" rx="28" fill="url(#bg)"/>
+  <path d="M42 118H1158" stroke="url(#line)" stroke-width="3"/>
+  <g transform="translate(70 180) scale(.31)"><image href="hermes-watch-mark.svg" width="1024" height="1024"/></g>
+  <g font-family="Inter,Segoe UI,sans-serif">
+    <text x="430" y="220" fill="#13d9ff" font-size="24" letter-spacing="6">HERMES WATCH</text>
+    <text x="430" y="290" fill="#f5f7ff" font-size="52" font-weight="700">NEW RELEASE</text>
+    <text x="430" y="350" fill="#b6c1db" font-size="26">Project update detected</text>
+    <text x="430" y="410" fill="#f5f7ff" font-size="34" font-weight="600">gateflow · v0.1.0</text>
+    <text x="430" y="485" fill="#8b5cf6" font-size="24">VIEW RELEASE NOTES  →</text>
+  </g>
+  <rect x="1.5" y="1.5" width="1197" height="672" rx="26.5" fill="none" stroke="#8b5cf6" stroke-opacity=".55" stroke-width="3"/>
+</svg>

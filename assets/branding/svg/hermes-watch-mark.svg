@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Hermes Watch mark</title>
+  <desc id="desc">A winged cyan radar eye with a silver crescent and gold accents.</desc>
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff3bf"/>
+      <stop offset=".42" stop-color="#f4b64d"/>
+      <stop offset="1" stop-color="#b66a1f"/>
+    </linearGradient>
+    <linearGradient id="silver" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset=".48" stop-color="#c8d3e7"/>
+      <stop offset="1" stop-color="#6e7da2"/>
+    </linearGradient>
+    <radialGradient id="core" cx="50%" cy="45%" r="65%">
+      <stop offset="0" stop-color="#17263d"/>
+      <stop offset=".72" stop-color="#09111f"/>
+      <stop offset="1" stop-color="#02050b"/>
+    </radialGradient>
+    <filter id="cyanGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Angular messenger wing -->
+  <path fill="url(#gold)" stroke="#fff1c7" stroke-width="5" d="M90 175 L560 365 474 454 198 351Z"/>
+  <path fill="url(#gold)" stroke="#fff1c7" stroke-width="5" d="M155 386 456 489 395 562 218 508Z"/>
+  <path fill="url(#silver)" stroke="#eaf1ff" stroke-width="5" d="M243 581 408 623 349 706 275 684Z"/>
+
+  <!-- Crescent and lower relay blade -->
+  <path fill="none" stroke="url(#silver)" stroke-width="58" stroke-linecap="butt" d="M790 245A292 292 0 0 1 790 755"/>
+  <path fill="url(#silver)" stroke="#eaf1ff" stroke-width="5" d="M627 687 779 779 696 904 613 785Z"/>
+
+  <!-- Radar eye -->
+  <circle cx="570" cy="510" r="236" fill="url(#core)" stroke="#90a4c8" stroke-width="14"/>
+  <g fill="none" stroke="#13d9ff" stroke-width="10" filter="url(#cyanGlow)">
+    <circle cx="570" cy="510" r="184"/>
+    <circle cx="570" cy="510" r="126"/>
+    <circle cx="570" cy="510" r="68"/>
+  </g>
+  <g stroke="#51e7ff" stroke-width="5" opacity=".8">
+    <path d="M570 326V694M386 510H754"/>
+  </g>
+  <path d="M570 510 718 402" stroke="#8ff3ff" stroke-width="18" stroke-linecap="round" filter="url(#cyanGlow)"/>
+  <circle cx="570" cy="510" r="31" fill="#d7fbff" stroke="#13d9ff" stroke-width="10" filter="url(#cyanGlow)"/>
+</svg>

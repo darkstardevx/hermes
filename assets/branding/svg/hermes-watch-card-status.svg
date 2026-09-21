@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title">
+  <title id="title">Hermes Watch status card</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#080d16"/><stop offset="1" stop-color="#111d2d"/></linearGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#13d9ff"/><stop offset="1" stop-color="#f4b64d"/></linearGradient>
+  </defs>
+  <rect width="1200" height="675" rx="28" fill="url(#bg)"/>
+  <path d="M42 118H1158" stroke="url(#line)" stroke-width="3"/>
+  <g transform="translate(72 170) scale(.29)"><image href="hermes-watch-mark.svg" width="1024" height="1024"/></g>
+  <g font-family="Inter,Segoe UI,sans-serif">
+    <text x="430" y="220" fill="#13d9ff" font-size="24" letter-spacing="6">HERMES WATCH</text>
+    <text x="430" y="290" fill="#f5f7ff" font-size="52" font-weight="700">SYSTEM STATUS</text>
+    <circle cx="450" cy="360" r="9" fill="#4ade80"/>
+    <text x="480" y="370" fill="#f5f7ff" font-size="30">All requested gates green</text>
+    <text x="430" y="435" fill="#b6c1db" font-size="25">18 projects · CI monitored · dev-log online</text>
+    <text x="430" y="505" fill="#f4b64d" font-size="24">OPEN STATUS DASHBOARD  →</text>
+  </g>
+  <rect x="1.5" y="1.5" width="1197" height="672" rx="26.5" fill="none" stroke="#13d9ff" stroke-opacity=".45" stroke-width="3"/>
+</svg>
