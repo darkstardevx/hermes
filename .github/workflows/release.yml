@@ -83,4 +83,4 @@ jobs:
           VERSION: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          gh release create "$VERSION" dist/* --verify-tag --title "Hermes Watch $VERSION" --generate-notes
+          gh release create "$VERSION" dist/* --repo darkstardevx/hermes --verify-tag --title "Hermes Watch $VERSION" --generate-notes
