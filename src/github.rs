@@ -19,6 +19,12 @@ pub struct Asset {
 }
 
 #[derive(Deserialize)]
+pub struct RepoActivity {
+    pub html_url: String,
+    pub pushed_at: Option<String>,
+}
+
+#[derive(Deserialize)]
 struct WorkflowRuns {
     workflow_runs: Vec<WorkflowRun>,
 }
@@ -50,6 +56,21 @@ pub async fn latest_release(
         return Ok(None);
     }
     Ok(Some(resp.error_for_status()?.json::<Release>().await?))
+}
+
+/// Basic repository activity used by the scheduled #dev-log digest.
+pub async fn repo_activity(
+    client: &reqwest::Client,
+    repo: &str,
+    token: Option<&str>,
+) -> Result<RepoActivity, reqwest::Error> {
+    let url = format!("https://api.github.com/repos/{repo}");
+    request(client, &url, token)
+        .send()
+        .await?
+        .error_for_status()?
+        .json::<RepoActivity>()
+        .await
 }
 
 /// Most recent completed workflow run's conclusion, for the repo's default

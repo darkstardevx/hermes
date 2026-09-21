@@ -26,6 +26,35 @@ const REPOS: &[(&str, &str)] = &[
     ("cyberplug-bar-widget", "darkstardevx/cyberplug-bar-widget"),
     ("diagprint", "darkstardevx/diagprint"),
     ("gateflow", "darkstardevx/gateflow"),
+    ("agentforge", "darkstardevx/agentforge"),
+];
+
+const FEATURED_TOOLS: &[(&str, &str, &str)] = &[
+    (
+        "cybercore",
+        "The shared design system every tool above is built on.",
+        "https://darkstardevx.github.io/cybercore/",
+    ),
+    (
+        "cyberdeck",
+        "Systems intelligence framework.",
+        "https://darkstardevx.github.io/cyberdeck/",
+    ),
+    (
+        "diagprint",
+        "Rust diagnostics lifecycle framework.",
+        "https://darkstardevx.github.io/diagprint/",
+    ),
+    (
+        "gateflow",
+        "Kernel-sandbox testing with netns, chaos, and veth.",
+        "https://darkstardevx.github.io/gateflow/",
+    ),
+    (
+        "cybermeta",
+        "TUI EXIF metadata tool.",
+        "https://darkstardevx.github.io/cybermeta/",
+    ),
 ];
 
 pub fn resolve(name: &str) -> Option<&'static str> {
@@ -35,6 +64,10 @@ pub fn resolve(name: &str) -> Option<&'static str> {
 
 pub fn all() -> impl Iterator<Item = &'static str> {
     REPOS.iter().map(|(_, r)| *r)
+}
+
+pub fn featured() -> impl Iterator<Item = (&'static str, &'static str, &'static str)> {
+    FEATURED_TOOLS.iter().copied()
 }
 
 pub fn names_list() -> String {
