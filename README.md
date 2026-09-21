@@ -8,6 +8,13 @@ portfolio's GitHub repos into Discord via slash commands. It can also publish
 an opt-in, stateful project-update digest to `#dev-log`. No privileged gateway
 intents or message reading are required.
 
+## 🎨 Hermes Watch identity
+
+The current visual direction is a god-like cyber-messenger mark: watchful,
+signal-driven, and built to fit the Cybercore design language.
+
+![Hermes Watch logo concepts](assets/branding/hermes-watch-logo-concepts.png)
+
 ## 🚀 Commands
 
 ```
