@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#080a12" />
+    <meta name="description" content="Hermes Watch — the Cybercore messenger bot for releases, CI, downloads, and project intelligence." />
+    <meta property="og:title" content="Hermes Watch — Cybercore messenger bot" />
+    <meta property="og:description" content="The herald of the Cybercore. Release radar, CI status, dev-log intelligence, and private troubleshooting guidance for Discord." />
+    <meta property="og:image" content="https://darkstardevx.github.io/hermes/assets/hermes-watch-header.png" />
+    <meta property="og:type" content="website" />
+    <title>Hermes Watch · Cybercore messenger bot</title>
+    <link rel="icon" type="image/png" href="assets/hermes-watch-mark.png" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-glow page-glow-one" aria-hidden="true"></div>
+    <div class="page-glow page-glow-two" aria-hidden="true"></div>
+
+    <header class="topbar shell">
+      <a class="brand" href="#top" aria-label="Hermes Watch home">
+        <span class="brand-mark"><img src="assets/hermes-watch-mark.png" alt="" /></span>
+        <span><strong>HERMES</strong><small>WATCH / CYBERCORE</small></span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="#capabilities">Capabilities</a>
+        <a href="#commands">Commands</a>
+        <a href="#setup">Setup</a>
+      </nav>
+      <div class="topbar-actions">
+        <span class="pulse-status"><i></i> online by design</span>
+        <a class="icon-link" href="https://github.com/darkstardevx/hermes" aria-label="Hermes Watch on GitHub">↗</a>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero shell">
+        <div class="hero-copy">
+          <p class="eyebrow"><span></span>MESSENGER OF THE CYBERCORE</p>
+          <h1>The herald of the <em>machine realm.</em></h1>
+          <p class="hero-lede">Hermes Watch carries the signal between your projects and your people — releases, CI, downloads, and development intelligence delivered straight to Discord.</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#setup">Summon Hermes <span>↗</span></a>
+            <a class="button button-quiet" href="https://github.com/darkstardevx/hermes">Inspect the source <span>↗</span></a>
+          </div>
+          <div class="hero-proof">
+            <span><b>18</b> tracked projects</span>
+            <span><b>0</b> privileged intents</span>
+            <span><b>1</b> focused messenger</span>
+          </div>
+        </div>
+
+        <div class="hero-console" aria-label="Hermes Watch live interface preview">
+          <div class="console-stars" aria-hidden="true"></div>
+          <div class="orbit orbit-a"></div>
+          <div class="orbit orbit-b"></div>
+          <div class="orbit orbit-c"></div>
+          <div class="hero-mark-wrap">
+            <div class="mark-ring"></div>
+            <img src="assets/hermes-watch-mark.png" alt="Hermes Watch radar wing mark" />
+          </div>
+          <div class="signal signal-one"><i></i><span>GATEFLOW / RELEASE</span></div>
+          <div class="signal signal-two"><i></i><span>CI TELEMETRY / GREEN</span></div>
+          <div class="signal signal-three"><i></i><span>DEV-LOG / WATCHING</span></div>
+          <div class="console-label"><span>HERMES WATCH</span><strong>MESSENGER ONLINE</strong></div>
+        </div>
+      </section>
+
+      <div class="ticker shell" aria-label="Hermes Watch capabilities">
+        <span>RELEASE RADAR</span><i></i><span>CI OMEN</span><i></i><span>DEV-LOG SIGNAL</span><i></i><span>PRIVATE TRIAGE</span><i></i><span>CYBERCORE / 2026</span>
+      </div>
+
+      <section class="section shell" id="capabilities">
+        <div class="section-heading">
+          <p class="eyebrow"><span></span>WHAT THE HERALD CARRIES</p>
+          <h2>One bot. Every signal<br /><em>worth hearing.</em></h2>
+          <p>Hermes is deliberately small, explicit, and useful. It reads GitHub when summoned, publishes only the updates you opt into, and never needs to read Discord message content.</p>
+        </div>
+        <div class="capability-grid">
+          <article class="feature-card feature-card-large">
+            <div class="feature-icon icon-radar">◎</div>
+            <p class="card-kicker">01 / RELEASE RADAR</p>
+            <h3>Bring every new release into the light.</h3>
+            <p><code>/releases &lt;tool&gt;</code> returns the latest release, notes, and a direct GitHub link. <code>/downloads &lt;tool&gt;</code> reports asset downloads without digging through tabs.</p>
+            <span class="card-line"></span>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon icon-check">✓</div>
+            <p class="card-kicker">02 / CI OMEN</p>
+            <h3>A green signal across the portfolio.</h3>
+            <p><code>/status</code> gives the Cybercore project line a quick, readable health check.</p>
+            <span class="card-line"></span>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon icon-signal">⌁</div>
+            <p class="card-kicker">03 / DEV-LOG</p>
+            <h3>Quietly watch. Briefly report.</h3>
+            <p>The optional stateful poller posts compact project activity and release links to <code>#dev-log</code> without replaying old history.</p>
+            <span class="card-line"></span>
+          </article>
+          <article class="feature-card feature-card-wide">
+            <div class="feature-icon icon-lock">◇</div>
+            <p class="card-kicker">04 / PRIVATE TRIAGE</p>
+            <h3>Guidance without turning support into surveillance.</h3>
+            <p><code>/troubleshoot</code> is ephemeral and opt-in. Hermes provides a first-check path, issue checklist, redaction warning, and direct project link — while keeping message reading disabled.</p>
+            <a class="text-link" href="https://github.com/darkstardevx/hermes#commands">Read the command contract <span>→</span></a>
+          </article>
+        </div>
+      </section>
+
+      <section class="signal-section shell">
+        <div class="signal-panel">
+          <div class="panel-topline"><span>HERMES / SIGNAL BOARD</span><span>READ-ONLY TELEMETRY</span></div>
+          <div class="signal-board">
+            <div class="board-axis"><span>RELEASE</span><span>CI</span><span>DEV-LOG</span><span>TRIAGE</span></div>
+            <div class="board-row"><strong>gateflow</strong><span class="bar"><i style="width: 86%"></i></span><b>GREEN</b></div>
+            <div class="board-row"><strong>agentforge</strong><span class="bar"><i style="width: 72%"></i></span><b>WATCH</b></div>
+            <div class="board-row"><strong>cybervault</strong><span class="bar"><i style="width: 94%"></i></span><b>GREEN</b></div>
+            <div class="board-row"><strong>ghostport</strong><span class="bar"><i style="width: 61%"></i></span><b>SYNC</b></div>
+          </div>
+          <div class="panel-footer"><span><i class="live-dot"></i> poller standing by</span><span>GITHUB API / DISCORD</span></div>
+        </div>
+        <div class="signal-copy">
+          <p class="eyebrow"><span></span>THE BOT-LIKE PART</p>
+          <h2>Signals in.<br /><em>Clarity out.</em></h2>
+          <p>Hermes is not another noisy all-purpose bot. It is the watchman at the gate: a narrow interface for the project events your community actually needs.</p>
+          <ul class="principles">
+            <li><span>↳</span><div><strong>Slash-command native</strong><small>No privileged message-content intent.</small></div></li>
+            <li><span>↳</span><div><strong>Stateful by design</strong><small>No duplicate dev-log history after restarts.</small></div></li>
+            <li><span>↳</span><div><strong>Human-readable output</strong><small>Links, context, and a clear next action.</small></div></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section commands-section shell" id="commands">
+        <div class="section-heading compact-heading">
+          <p class="eyebrow"><span></span>THE RITUALS</p>
+          <h2>Speak a command.<br /><em>Receive a signal.</em></h2>
+        </div>
+        <div class="command-table">
+          <div class="command-row command-head"><span>COMMAND</span><span>WHAT IT SUMMONS</span><span>VISIBILITY</span></div>
+          <div class="command-row"><code>/status</code><span>CI status across every tracked repo</span><small>PUBLIC</small></div>
+          <div class="command-row"><code>/releases &lt;tool&gt;</code><span>Latest release, notes, and GitHub link</span><small>PUBLIC</small></div>
+          <div class="command-row"><code>/downloads &lt;tool&gt;</code><span>Latest release asset download totals</span><small>PUBLIC</small></div>
+          <div class="command-row"><code>/tools</code><span>Clickable project cards for #dev-tools</span><small>PUBLIC</small></div>
+          <div class="command-row"><code>/troubleshoot</code><span>Private opt-in triage guidance</span><small>EPHEMERAL</small></div>
+          <div class="command-row"><code>/server-audit</code><span>Private channel layout and permission audit</span><small>EPHEMERAL</small></div>
+        </div>
+      </section>
+
+      <section class="setup-section shell" id="setup">
+        <div class="setup-copy">
+          <p class="eyebrow"><span></span>CALL THE MESSENGER</p>
+          <h2>Bring Hermes<br /><em>into your server.</em></h2>
+          <p>Clone the bot, add the token, and let the herald take the watch. GitHub token access is optional for public repos, but recommended for reliable project polling.</p>
+          <div class="setup-links">
+            <a class="button button-primary" href="https://github.com/darkstardevx/hermes">View Hermes on GitHub <span>↗</span></a>
+            <a class="button button-quiet" href="https://discord.com/channels/1525500888905420920/1550694349556416604">Find us on Discord <span>↗</span></a>
+          </div>
+        </div>
+        <div class="code-card">
+          <div class="code-card-top"><span><i></i><i></i><i></i></span><small>summon-hermes.sh</small><button type="button" data-copy="git clone https://github.com/darkstardevx/hermes.git\ncd hermes\ncargo run --release">COPY</button></div>
+          <pre><span class="muted">$</span> git clone <em>https://github.com/darkstardevx/hermes.git</em>
+<span class="muted">$</span> cd hermes
+<span class="muted">$</span> cp .env.example .env
+<span class="muted">$</span> cargo run --release
+
+<span class="comment"># Hermes Watch is listening.</span></pre>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer shell">
+      <div class="footer-brand"><span class="brand-mark small"><img src="assets/hermes-watch-mark.png" alt="" /></span><span><strong>HERMES WATCH</strong><small>THE CYBERCORE MESSENGER</small></span></div>
+      <p>Built in Rust · carried by Cybercore · watching the signal.</p>
+      <div class="footer-links"><a href="https://github.com/darkstardevx/hermes">GitHub</a><a href="https://discord.com/channels/1525500888905420920/1550694349556416604">Discord</a><a href="#top">Back to top ↑</a></div>
+    </footer>
+
+    <script>
+      document.querySelectorAll('[data-copy]').forEach((button) => {
+        button.addEventListener('click', async () => {
+          await navigator.clipboard.writeText(button.dataset.copy);
+          const label = button.textContent;
+          button.textContent = 'COPIED';
+          setTimeout(() => { button.textContent = label; }, 1400);
+        });
+      });
+    </script>
+  </body>
+</html>

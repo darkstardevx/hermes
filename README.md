@@ -10,6 +10,8 @@ portfolio's GitHub repos into Discord via slash commands. It can also publish
 an opt-in, stateful project-update digest to `#dev-log`. No privileged gateway
 intents or message reading are required.
 
+**[Open the Hermes Watch project page →](https://darkstardevx.github.io/hermes/)**
+
 ## 🎨 Hermes Watch identity
 
 The current visual direction is a god-like cyber-messenger mark: watchful,
