@@ -81,6 +81,84 @@ async fn releases(
     Ok(())
 }
 
+/// Portfolio directory with live release and CI context for one project.
+#[poise::command(slash_command, rename = "project")]
+async fn project(
+    ctx: Context<'_>,
+    #[description = "Project name, e.g. gateflow or agentforge"] tool: String,
+) -> Result<(), Error> {
+    ctx.defer().await?;
+    let tool_name = tool.trim().to_ascii_lowercase();
+    let Some(repo) = repos::resolve(&tool_name) else {
+        ctx.say(format!(
+            "Unknown project {tool}. Try one of: {}",
+            repos::names_list()
+        ))
+        .await?;
+        return Ok(());
+    };
+
+    let release =
+        github::latest_release(&ctx.data().http, repo, ctx.data().github_token.as_deref())
+            .await
+            .ok()
+            .flatten();
+    let ci =
+        github::ci_status_for(&ctx.data().http, repo, ctx.data().github_token.as_deref()).await;
+    let ci_summary = match ci {
+        Ok(true) => "✅ Passing".to_owned(),
+        Ok(false) => "❌ Not passing".to_owned(),
+        Err(_) => "❔ Unavailable".to_owned(),
+    };
+    let release_summary = match release.as_ref() {
+        Some(release) => format!("[{}]({})", release.tag_name, release.html_url),
+        None => "No published release".to_owned(),
+    };
+    let project_link = repos::site(&tool_name)
+        .map(|url| format!("[Project page]({url})"))
+        .unwrap_or_else(|| "No project page published yet".to_owned());
+
+    let embed = serenity::CreateEmbed::new()
+        .title(format!("🛰️ {tool_name}"))
+        .url(format!("https://github.com/{repo}"))
+        .description(repos::description(&tool_name))
+        .field("Latest release", release_summary, true)
+        .field("CI signal", ci_summary, true)
+        .field(
+            "Links",
+            format!("[GitHub](https://github.com/{repo})\n{project_link}"),
+            false,
+        )
+        .footer(serenity::CreateEmbedFooter::new(
+            "Hermes Watch • GitHub read-only • no message reading",
+        ))
+        .color(0x16_dc_ff);
+    ctx.send(poise::CreateReply::default().embed(embed)).await?;
+    Ok(())
+}
+
+/// Compact directory of every project Hermes can currently understand.
+#[poise::command(slash_command, rename = "projects")]
+async fn projects(ctx: Context<'_>) -> Result<(), Error> {
+    let lines = repos::all_named()
+        .map(|(name, repo)| {
+            format!(
+                "• **{name}** — {}\n  https://github.com/{repo}",
+                repos::description(name)
+            )
+        })
+        .collect::<Vec<_>>();
+    let embed = serenity::CreateEmbed::new()
+        .title("🗺️ Cybercore project directory")
+        .description(lines.join("\n"))
+        .footer(serenity::CreateEmbedFooter::new(
+            "Use /project <name> for live release and CI context",
+        ))
+        .color(0x95_64_ff);
+    ctx.send(poise::CreateReply::default().embed(embed)).await?;
+    Ok(())
+}
+
 /// Total download count across a tool's latest release assets.
 #[poise::command(slash_command)]
 async fn downloads(
@@ -602,6 +680,8 @@ async fn main() -> Result<(), anyhow::Error> {
             commands: vec![
                 status(),
                 releases(),
+                project(),
+                projects(),
                 downloads(),
                 troubleshoot(),
                 tools(),

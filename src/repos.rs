@@ -66,10 +66,45 @@ pub fn all() -> impl Iterator<Item = &'static str> {
     REPOS.iter().map(|(_, r)| *r)
 }
 
+pub fn all_named() -> impl Iterator<Item = (&'static str, &'static str)> {
+    REPOS.iter().copied()
+}
+
 pub fn featured() -> impl Iterator<Item = (&'static str, &'static str, &'static str)> {
     FEATURED_TOOLS.iter().copied()
 }
 
 pub fn names_list() -> String {
     REPOS.iter().map(|(n, _)| *n).collect::<Vec<_>>().join(", ")
+}
+
+pub fn description(name: &str) -> &'static str {
+    match name {
+        "agentforge" => "Deterministic AI-assisted workflow orchestration.",
+        "apexdaemon" => "Background automation for theme sync, fleet health, and backups.",
+        "aetherscope" => "Packet capture and BPF-filtered network inspection.",
+        "cybercore" => "The shared Cybercore design system and foundations.",
+        "cyberdeck" => "Systems intelligence framework.",
+        "cybermeta" => "Terminal EXIF metadata tooling.",
+        "cyberplug" => "Plugin manager for Omarchy.",
+        "cyberplug-bar-widget" => "Companion bar widget for Cyberplug.",
+        "cyberterm" => "GPU-rendered terminal emulator.",
+        "cybervault" => "Encrypted secrets vault using modern authenticated cryptography.",
+        "diagprint" => "Rust diagnostics lifecycle framework.",
+        "echo" => "Traffic inspector TUI for WraithFlow captures.",
+        "gateflow" => "Kernel-sandbox testing with namespaces, chaos, and veth.",
+        "ghostport" => "Encrypted NAT-traversing port forwarder.",
+        "keysmith" => "Password, passphrase, and hash generation companion.",
+        "sentrygrid" => "Network exposure auditor with host and container correlation.",
+        "vortexwall" => "Active-blackholing firewall using nftables.",
+        "wraithflow" => "Config-driven TCP proxy and traffic-analysis pipelines.",
+        _ => "Cybercore project.",
+    }
+}
+
+pub fn site(name: &str) -> Option<&'static str> {
+    FEATURED_TOOLS
+        .iter()
+        .find(|(project, _, _)| *project == name)
+        .map(|(_, _, url)| *url)
 }

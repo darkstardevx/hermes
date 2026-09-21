@@ -76,7 +76,7 @@ pub async fn repo_activity(
 /// Most recent completed workflow run's conclusion, for the repo's default
 /// branch -- Ok(true) green, Ok(false) red, Err if the request itself fails
 /// (private repo without a token, rate limit, network blip).
-async fn ci_status(
+pub async fn ci_status_for(
     client: &reqwest::Client,
     repo: &str,
     token: Option<&str>,
@@ -101,7 +101,7 @@ pub async fn all_ci_status(
 ) -> Vec<(&'static str, Result<bool, reqwest::Error>)> {
     let mut out = Vec::new();
     for repo in crate::repos::all() {
-        let result = ci_status(client, repo, token).await;
+        let result = ci_status_for(client, repo, token).await;
         out.push((repo, result));
     }
     out

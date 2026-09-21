@@ -10,7 +10,7 @@ portfolio's GitHub repos into Discord via slash commands. It can also publish
 an opt-in, stateful project-update digest to `#dev-log`. No privileged gateway
 intents or message reading are required.
 
-**[Open the Hermes Watch project page →](https://darkstardevx.github.io/hermes/)**
+**[Open the Hermes Watch project page →](https://darkstardevx.github.io/hermes/)** · **[Read the capability roadmap →](docs/ROADMAP.md)**
 
 ## 🎨 Hermes Watch identity
 
@@ -32,6 +32,8 @@ Production-ready exports live in [`assets/branding/`](assets/branding/):
 ```
 /status               CI status (pass/fail) across every tracked repo
 /releases <tool>      latest release + notes for one tool
+/project <tool>       live project card with release, CI, and links
+/projects             compact Cybercore project directory
 /downloads <tool>     total download count on the latest release
 /troubleshoot         private opt-in troubleshooting intake
 /tools                linked preview cards for the Cybercore toolchain
@@ -83,8 +85,7 @@ at the lower rate limit.
 ```
 src/main.rs    slash command definitions + bot bootstrap
 src/github.rs  GitHub REST API wrappers (activity, releases, workflow runs)
-src/repos.rs   the tracked-repo registry -- add a tool here once it's
-               public and release-pipelined
+src/repos.rs   tracked-repo registry, descriptions, and project pages
 ```
 
 ## 🔒 Token handling
