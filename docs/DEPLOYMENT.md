@@ -61,6 +61,11 @@ recommended for reliable GitHub polling; `DEV_LOG_CHANNEL_ID` is optional
 when using channel watches. Keep the file outside the repository and never
 paste its contents into an issue, commit, or Discord message.
 
+`WATCH_COOLDOWN_SECS` defaults to 900 seconds and suppresses duplicate watch
+notifications during transient retries. `DEV_LOG_INTERVAL_SECS` controls the
+poll interval and defaults to one hour; the application enforces a five-minute
+minimum.
+
 ## Operate Hermes
 
 ```bash

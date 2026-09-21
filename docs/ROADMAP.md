@@ -15,6 +15,8 @@ Hermes keeps privileged message-content access disabled. Interactive features us
 - [x] Stateful #dev-log activity digest
 - [x] Release and CI lookup commands
 - [x] Per-project subscriptions with /watch and /unwatch
+- [x] Per-channel event filters for activity, releases, and CI
+- [x] Duplicate-delivery cooldown for watched channels
 - [ ] Scheduled weekly portfolio digest
 - [ ] GitHub webhooks with polling fallback
 
@@ -44,7 +46,7 @@ Hermes keeps privileged message-content access disabled. Interactive features us
 ### 5. Courier — notifications
 
 - [ ] Role-based notification subscriptions
-- [ ] CI failure and release alerts
+- [x] CI failure and release alerts
 - [ ] Quiet hours and notification preferences
 - [ ] Optional DM delivery, off by default
 

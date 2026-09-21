@@ -50,11 +50,17 @@ Run the health command on the always-on host to confirm Hermes uptime, GitHub
 authentication mode, and whether the dev-log worker is enabled. It does not
 expose tokens or read messages.
 
-Run /watch tool:<name> in a channel to opt that channel into future public
-GitHub commit and release updates. Only members with Manage Channels can add
-or remove watches; /watches is available to everyone in the channel. State is
-stored in SUBSCRIPTIONS_STATE_FILE and contains only guild/channel IDs and
-repository names.
+Run `/watch tool:<name> events:<activity,release,ci>` in a channel to opt that
+channel into selected public GitHub events. The `events` option defaults to all
+three; use `events:ci` for a quiet CI-only feed or `events:release` for a
+release channel. Only members with Manage Channels can add or remove watches;
+`/watches` is available to everyone in the channel. Re-running `/watch` updates
+the event filter for an existing project watch.
+
+State is stored in `SUBSCRIPTIONS_STATE_FILE` and contains only guild/channel
+IDs, repository names, and event filters. The default `WATCH_COOLDOWN_SECS=900`
+prevents duplicate deliveries to the same channel during a transient poll or
+retry.
 
 ## 🛰️ Scheduled `#dev-log`
 
@@ -65,7 +71,8 @@ start, then posts a compact digest only when a tracked repository receives new
 activity; release links are included when available.
 The default interval is one hour (`DEV_LOG_INTERVAL_SECS=3600`). State is kept
 in `.hermes/dev-log-state.json` by default and contains only public GitHub
-timestamps and release tags. Leave the setting unset to keep the fixed digest off.
+timestamps, release tags, and optional CI state. Leave the setting unset to keep
+the fixed digest off.
 
 To get the channel ID in Discord, enable **User Settings → Advanced → Developer
 Mode**, then right-click `#dev-log` and choose **Copy Channel ID**. The bot

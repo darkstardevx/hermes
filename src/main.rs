@@ -9,7 +9,7 @@ mod subscriptions;
 use anyhow::Context as _;
 use poise::serenity_prelude as serenity;
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -89,6 +89,7 @@ async fn health(ctx: Context<'_>) -> Result<(), Error> {
 async fn watch(
     ctx: Context<'_>,
     #[description = "Tool name, e.g. gateflow or agentforge"] tool: String,
+    #[description = "Comma-separated: activity, release, ci (default: all)"] events: Option<String>,
 ) -> Result<(), Error> {
     ctx.defer_ephemeral().await?;
     let Some(guild_id) = ctx.guild_id() else {
@@ -104,13 +105,26 @@ async fn watch(
         return Ok(());
     };
 
+    let event_filter = match parse_watch_events(events.as_deref()) {
+        Ok(filter) => filter,
+        Err(error) => {
+            ctx.say(error).await?;
+            return Ok(());
+        }
+    };
+
     let target = subscriptions::Target::new(guild_id.get(), ctx.channel_id().get());
-    match ctx.data().subscriptions.watch(repo, target) {
+    let event_summary = event_filter.names().collect::<Vec<_>>().join(", ");
+    match ctx
+        .data()
+        .subscriptions
+        .watch(repo, subscriptions::Watch::new(target, event_filter))
+    {
         Ok(true) => {
             ctx.send(
                 poise::CreateReply::default()
                     .content(format!(
-                        "✅ This channel now watches {repo}. Hermes will post future public commit and release updates here."
+                        "✅ This channel now watches {repo} for **{event_summary}** events. Hermes will post future public updates here."
                     ))
                     .ephemeral(true),
             )
@@ -134,6 +148,34 @@ async fn watch(
         }
     }
     Ok(())
+}
+
+fn parse_watch_events(raw: Option<&str>) -> Result<subscriptions::EventFilter, String> {
+    let raw = raw.unwrap_or("activity,release,ci");
+    let mut events = Vec::new();
+    for value in raw
+        .split(',')
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+    {
+        let canonical = match value.to_ascii_lowercase().as_str() {
+            "activity" | "activities" | "commit" | "commits" => "activity",
+            "release" | "releases" => "release",
+            "ci" | "checks" | "builds" => "ci",
+            other => {
+                return Err(format!(
+                    "Unknown watch event `{other}`. Use `activity`, `release`, `ci`, or a comma-separated combination."
+                ));
+            }
+        };
+        if !events.iter().any(|event| event == canonical) {
+            events.push(canonical.to_owned());
+        }
+    }
+    if events.is_empty() {
+        return Err("Choose at least one watch event: `activity`, `release`, or `ci`.".to_owned());
+    }
+    Ok(subscriptions::EventFilter::from_names(events))
 }
 
 /// Remove the current channel's subscription for one project.
@@ -201,7 +243,20 @@ async fn watches(ctx: Context<'_>) -> Result<(), Error> {
     } else {
         repos
             .iter()
-            .map(|repo| format!("• {repo}"))
+            .map(|repo| {
+                let events = ctx
+                    .data()
+                    .subscriptions
+                    .watches_for(repo)
+                    .into_iter()
+                    .find(|watch| {
+                        watch.guild_id == guild_id.get()
+                            && watch.channel_id == ctx.channel_id().get()
+                    })
+                    .map(|watch| watch.events.names().collect::<Vec<_>>().join(", "))
+                    .unwrap_or_else(|| "activity, release, ci".to_owned());
+                format!("• **{repo}** — {events}")
+            })
             .collect::<Vec<_>>()
             .join("\n")
     };
@@ -686,6 +741,14 @@ struct DevLogState {
 struct DevLogRepoState {
     pushed_at: Option<String>,
     release_tag: Option<String>,
+    #[serde(default)]
+    ci_success: Option<bool>,
+}
+
+struct ProjectEvent {
+    repo: String,
+    kind: &'static str,
+    line: String,
 }
 
 fn load_dev_log_state(path: &Path) -> DevLogState {
@@ -726,9 +789,11 @@ async fn dev_log_poll(
     interval_secs: u64,
     state_path: PathBuf,
     subscriptions: subscriptions::Store,
+    watch_cooldown_secs: u64,
 ) {
     let mut state = load_dev_log_state(&state_path);
     let mut first_run = state.repos.is_empty();
+    let mut last_delivered: HashMap<(u64, u64, String, String), Instant> = HashMap::new();
 
     loop {
         if dev_log_channel.is_none() && subscriptions.is_empty() {
@@ -737,7 +802,7 @@ async fn dev_log_poll(
         }
 
         let mut next_repos = state.repos.clone();
-        let mut changes: Vec<(String, String)> = Vec::new();
+        let mut changes: Vec<ProjectEvent> = Vec::new();
 
         for repo in repos::all() {
             let activity =
@@ -753,7 +818,13 @@ async fn dev_log_poll(
             let pushed_changed = previous.and_then(|entry| entry.pushed_at.as_deref())
                 != activity.pushed_at.as_deref();
 
-            let latest_release = if first_run || pushed_changed {
+            let watched = subscriptions.watches_for(repo);
+            let needs_release = dev_log_channel.is_some()
+                || first_run
+                || pushed_changed
+                || watched.iter().any(|watch| watch.events.includes("release"));
+
+            let latest_release = if needs_release {
                 match github::latest_release(&github_http, repo, github_token.as_deref()).await {
                     Ok(release) => release,
                     Err(error) => {
@@ -774,23 +845,60 @@ async fn dev_log_poll(
                 .map(|release| release.tag_name.clone())
                 .or_else(|| previous.and_then(|entry| entry.release_tag.clone()));
 
+            let needs_ci = watched.iter().any(|watch| watch.events.includes("ci"));
+            let ci_success = if needs_ci {
+                match github::ci_status_for(&github_http, repo, github_token.as_deref()).await {
+                    Ok(value) => Some(value),
+                    Err(error) => {
+                        eprintln!("dev-log: CI check failed for {repo}: {error}");
+                        previous.and_then(|entry| entry.ci_success)
+                    }
+                }
+            } else {
+                previous.and_then(|entry| entry.ci_success)
+            };
+            let ci_changed = ci_success
+                .is_some_and(|value| previous.and_then(|entry| entry.ci_success) != Some(value));
+
             next_repos.insert(
                 repo.to_owned(),
                 DevLogRepoState {
                     pushed_at: activity.pushed_at.clone(),
                     release_tag,
+                    ci_success,
                 },
             );
 
-            if !first_run && (pushed_changed || release_changed) {
-                let mut line = format!("• **{repo}** — {}", activity.html_url);
-                if let Some(release) = latest_release.as_ref().filter(|_| release_changed) {
-                    line.push_str(&format!(
-                        " · release {}: {}",
-                        release.tag_name, release.html_url
-                    ));
+            if !first_run && pushed_changed {
+                changes.push(ProjectEvent {
+                    repo: repo.to_owned(),
+                    kind: "activity",
+                    line: format!("• **{repo}** — {}", activity.html_url),
+                });
+            }
+            if !first_run && release_changed {
+                if let Some(release) = latest_release.as_ref() {
+                    changes.push(ProjectEvent {
+                        repo: repo.to_owned(),
+                        kind: "release",
+                        line: format!(
+                            "• **{repo}** — release {}: {}",
+                            release.tag_name, release.html_url
+                        ),
+                    });
                 }
-                changes.push((repo.to_owned(), line));
+            }
+            if !first_run && ci_changed {
+                let icon = if ci_success == Some(true) {
+                    "✅"
+                } else {
+                    "❌"
+                };
+                changes.push(ProjectEvent {
+                    repo: repo.to_owned(),
+                    kind: "ci",
+                    line: format!("• **{repo}** — {icon} default-branch CI changed"),
+                });
             }
         }
 
@@ -803,7 +911,7 @@ async fn dev_log_poll(
                 let mut digest = changes
                     .iter()
                     .take(10)
-                    .map(|(_, line)| line.clone())
+                    .map(|event| event.line.clone())
                     .collect::<Vec<_>>();
                 let omitted = changes.len().saturating_sub(10);
                 if omitted > 0 {
@@ -821,11 +929,27 @@ async fn dev_log_poll(
                 }
             }
 
-            for (repo, line) in &changes {
+            for event in &changes {
                 let content = format!(
-                    "📡 **Project watch: {repo}**\n{line}\n\nOpt-in update from public GitHub activity."
+                    "📡 **Project watch: {} · {}**\n{}\n\nOpt-in update from public GitHub activity."
+                    , event.repo, event.kind, event.line
                 );
-                for target in subscriptions.targets_for(repo) {
+                for watch in subscriptions.watches_for(&event.repo) {
+                    if !watch.events.includes(event.kind) {
+                        continue;
+                    }
+                    let target = watch.target();
+                    let delivery_key = (
+                        target.guild_id,
+                        target.channel_id,
+                        event.repo.clone(),
+                        event.kind.to_owned(),
+                    );
+                    if last_delivered.get(&delivery_key).is_some_and(|last| {
+                        last.elapsed() < Duration::from_secs(watch_cooldown_secs)
+                    }) {
+                        continue;
+                    }
                     let channel_id = serenity::ChannelId::new(target.channel_id);
                     if let Err(error) = channel_id
                         .send_message(
@@ -835,9 +959,11 @@ async fn dev_log_poll(
                         .await
                     {
                         eprintln!(
-                            "watch: Discord post failed for {repo} in channel {}: {error}",
-                            target.channel_id
+                            "watch: Discord post failed for {} in channel {}: {error}",
+                            event.repo, target.channel_id
                         );
+                    } else {
+                        last_delivered.insert(delivery_key, Instant::now());
                     }
                 }
             }
@@ -874,6 +1000,10 @@ async fn main() -> Result<(), anyhow::Error> {
         .and_then(|value| value.parse::<u64>().ok())
         .unwrap_or(3_600)
         .max(300);
+    let watch_cooldown_secs = std::env::var("WATCH_COOLDOWN_SECS")
+        .ok()
+        .and_then(|value| value.parse::<u64>().ok())
+        .unwrap_or(900);
     let dev_log_state_path = PathBuf::from(
         std::env::var("DEV_LOG_STATE_FILE")
             .unwrap_or_else(|_| ".hermes/dev-log-state.json".to_owned()),
@@ -915,6 +1045,7 @@ async fn main() -> Result<(), anyhow::Error> {
                     dev_log_interval_secs,
                     dev_log_state_path.clone(),
                     subscriptions.clone(),
+                    watch_cooldown_secs,
                 ));
                 Ok(Data {
                     http: reqwest::Client::new(),
