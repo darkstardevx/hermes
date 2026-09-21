@@ -4,15 +4,34 @@ Hermes is a long-lived Discord gateway process. GitHub Pages hosts the project p
 
 The supported deployment shape is a dedicated `hermes` system user, a root-owned environment file, a signed release archive, and a hardened `systemd` service.
 
+## Oracle Always Free ARM setup
+
+Create the account at [Oracle Cloud Free Tier](https://signup.oraclecloud.com/). Choose the home region carefully: Always Free compute must be provisioned there. Oracle may require phone and card verification; its documentation says the card is not charged unless the account is upgraded. The free A1 allocation is 2 OCPUs and 12 GB of memory, subject to regional capacity and idle-instance reclamation.
+
+In the OCI console:
+
+1. Open **Compute → Instances → Create instance**.
+2. Name it `hermes-watch`.
+3. Choose an **Always Free Eligible** Ubuntu ARM64 image.
+4. Change shape to **VM.Standard.A1.Flex**, using **1 OCPU and 6 GB RAM** for Hermes.
+5. Create or select a VCN with a public subnet and assign a public IPv4 address.
+6. Add an SSH public key generated on your machine. Do not create a password-only login.
+7. Do not open an inbound Discord port. Hermes connects outbound to Discord over HTTPS/WebSocket; SSH port 22 is the only port needed for administration.
+
+Oracle can report `Out of host capacity` for Always Free shapes. If that happens, try another availability domain in the home region or retry later. Keep the VM active enough to avoid Oracle's idle-resource reclamation policy.
+
+After the instance receives a public IP, connect with the Ubuntu account and install the signed `aarch64-unknown-linux-gnu` archive below.
+
 ## Install a signed release
 
-On the target Linux host, install `cosign`, then choose a published version:
+On the target Linux host, install `cosign`, then choose a published version. Use the `aarch64-unknown-linux-gnu` archive for Oracle Ampere A1:
 
 ```bash
 VERSION=v0.1.0
-curl -fL "https://github.com/darkstardevx/hermes/releases/download/${VERSION}/hermes-${VERSION}-x86_64-unknown-linux-gnu.tar.gz" -o hermes.tar.gz
-curl -fL "https://github.com/darkstardevx/hermes/releases/download/${VERSION}/hermes-${VERSION}-x86_64-unknown-linux-gnu.tar.gz.sha256" -o hermes.tar.gz.sha256
-curl -fL "https://github.com/darkstardevx/hermes/releases/download/${VERSION}/hermes-${VERSION}-x86_64-unknown-linux-gnu.tar.gz.sigstore.json" -o hermes.tar.gz.sigstore.json
+TARGET=aarch64-unknown-linux-gnu
+curl -fL "https://github.com/darkstardevx/hermes/releases/download/${VERSION}/hermes-${VERSION}-${TARGET}.tar.gz" -o hermes.tar.gz
+curl -fL "https://github.com/darkstardevx/hermes/releases/download/${VERSION}/hermes-${VERSION}-${TARGET}.tar.gz.sha256" -o hermes.tar.gz.sha256
+curl -fL "https://github.com/darkstardevx/hermes/releases/download/${VERSION}/hermes-${VERSION}-${TARGET}.tar.gz.sigstore.json" -o hermes.tar.gz.sigstore.json
 
 sha256sum --check hermes.tar.gz.sha256
 cosign verify-blob hermes.tar.gz \

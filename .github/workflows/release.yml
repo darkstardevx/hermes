@@ -10,40 +10,77 @@ permissions:
   id-token: write
 
 jobs:
-  release:
+  build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            package: x86_64-unknown-linux-gnu
+          - target: aarch64-unknown-linux-gnu
+            package: aarch64-unknown-linux-gnu
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: Install ARM64 linker
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: sudo apt-get update && sudo apt-get install --yes gcc-aarch64-linux-gnu
       - name: Build Hermes
-        run: cargo build --locked --release
-      - name: Package Linux x86_64 binary
+        env:
+          TARGET: ${{ matrix.target }}
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+        run: cargo build --locked --release --target "$TARGET"
+      - name: Package binary
         shell: bash
         env:
           VERSION: ${{ github.ref_name }}
+          TARGET: ${{ matrix.target }}
+          PACKAGE: ${{ matrix.package }}
         run: |
           set -euo pipefail
-          mkdir -p dist/package
-          cp target/release/hermes dist/package/hermes
-          cp deploy/hermes.service dist/package/hermes.service
-          cp deploy/hermes.env.example dist/package/hermes.env.example
-          tar -C dist/package -czf "dist/hermes-${VERSION}-x86_64-unknown-linux-gnu.tar.gz" hermes hermes.service hermes.env.example
-          sha256sum "dist/hermes-${VERSION}-x86_64-unknown-linux-gnu.tar.gz" > "dist/hermes-${VERSION}-x86_64-unknown-linux-gnu.tar.gz.sha256"
+          mkdir -p package dist
+          cp "target/${TARGET}/release/hermes" package/hermes
+          cp deploy/hermes.service package/hermes.service
+          cp deploy/hermes.env.example package/hermes.env.example
+          archive="dist/hermes-${VERSION}-${PACKAGE}.tar.gz"
+          tar -C package -czf "$archive" hermes hermes.service hermes.env.example
+          sha256sum "$archive" > "${archive}.sha256"
       - name: Install Cosign
         uses: sigstore/cosign-installer@v4.1.0
       - name: Sign release archive with Sigstore
         shell: bash
         env:
           VERSION: ${{ github.ref_name }}
+          TARGET: ${{ matrix.target }}
+          PACKAGE: ${{ matrix.package }}
         run: |
           set -euo pipefail
-          archive="dist/hermes-${VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+          archive="dist/hermes-${VERSION}-${PACKAGE}.tar.gz"
           cosign sign-blob --yes --bundle "${archive}.sigstore.json" "$archive"
+      - name: Upload signed artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hermes-${{ matrix.target }}
+          path: dist/*
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download signed artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ github.ref_name }}
         run: |
+          set -euo pipefail
           gh release create "$VERSION" dist/* --verify-tag --title "Hermes Watch $VERSION" --generate-notes
