@@ -33,7 +33,7 @@ curl -fL "https://github.com/darkstardevx/hermes/releases/download/${VERSION}/he
 curl -fL "https://github.com/darkstardevx/hermes/releases/download/${VERSION}/hermes-${VERSION}-${TARGET}.tar.gz.sha256" -o hermes.tar.gz.sha256
 curl -fL "https://github.com/darkstardevx/hermes/releases/download/${VERSION}/hermes-${VERSION}-${TARGET}.tar.gz.sigstore.json" -o hermes.tar.gz.sigstore.json
 
-sha256sum --check hermes.tar.gz.sha256
+printf '%s  hermes.tar.gz\n' "$(awk '{print $1}' hermes.tar.gz.sha256)" | sha256sum --check
 cosign verify-blob hermes.tar.gz \
   --bundle hermes.tar.gz.sigstore.json \
   --certificate-identity-regexp 'https://github.com/darkstardevx/hermes/.github/workflows/release.yml@refs/tags/v.*' \
