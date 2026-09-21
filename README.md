@@ -12,6 +12,8 @@ intents or message reading are required.
 
 **[Open the Hermes Watch project page →](https://darkstardevx.github.io/hermes/)** · **[Read the capability roadmap →](docs/ROADMAP.md)**
 
+For unattended operation, use the signed release workflow and hardened systemd deployment described in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+
 ## 🎨 Hermes Watch identity
 
 The current visual direction is a god-like cyber-messenger mark: watchful,
@@ -74,6 +76,11 @@ Administrator.
 cp .env.example .env   # then paste in your real DISCORD_TOKEN
 cargo run
 ```
+
+For production-style operation, install a signed release archive on an
+always-on Linux host and enable the included `systemd` service. Hermes will
+start at boot and restart after failures; your local terminal does not need to
+remain open.
 
 `GITHUB_TOKEN` in `.env` is optional -- raises the unauthenticated GitHub
 API rate limit (60/hr -> 5000/hr) and lets `/status`/`/releases` reach

@@ -1,0 +1,37 @@
+[Unit]
+Description=Hermes Watch Cybercore Discord bot
+Documentation=https://darkstardevx.github.io/hermes/
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=hermes
+WorkingDirectory=/var/lib/hermes
+EnvironmentFile=/etc/hermes/hermes.env
+ExecStart=/usr/local/bin/hermes
+Restart=on-failure
+RestartSec=10s
+TimeoutStopSec=20s
+UMask=0077
+
+# Hermes only needs outbound HTTPS and the Discord gateway.
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=/var/lib/hermes
+StateDirectory=hermes
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,49 @@
+name: Hermes signed release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Build Hermes
+        run: cargo build --locked --release
+      - name: Package Linux x86_64 binary
+        shell: bash
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist/package
+          cp target/release/hermes dist/package/hermes
+          cp deploy/hermes.service dist/package/hermes.service
+          cp deploy/hermes.env.example dist/package/hermes.env.example
+          tar -C dist/package -czf "dist/hermes-${VERSION}-x86_64-unknown-linux-gnu.tar.gz" hermes hermes.service hermes.env.example
+          sha256sum "dist/hermes-${VERSION}-x86_64-unknown-linux-gnu.tar.gz" > "dist/hermes-${VERSION}-x86_64-unknown-linux-gnu.tar.gz.sha256"
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v4.1.0
+      - name: Sign release archive with Sigstore
+        shell: bash
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          archive="dist/hermes-${VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+          cosign sign-blob --yes --bundle "${archive}.sigstore.json" "$archive"
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ github.ref_name }}
+        run: |
+          gh release create "$VERSION" dist/* --verify-tag --title "Hermes Watch $VERSION" --generate-notes
