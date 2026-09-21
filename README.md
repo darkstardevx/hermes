@@ -38,23 +38,34 @@ Production-ready exports live in [`assets/branding/`](assets/branding/):
 /project <tool>       live project card with release, CI, and links
 /projects             compact Cybercore project directory
 /downloads <tool>     total download count on the latest release
+/watch <tool>         subscribe this channel to future project updates
+/unwatch <tool>       remove this channel's project subscription
+/watches              list this channel's project subscriptions
 /troubleshoot         private opt-in troubleshooting intake
 /tools                linked preview cards for the Cybercore toolchain
 /server-audit         private read-only channel layout and overlap audit
+```
 
 Run the health command on the always-on host to confirm Hermes uptime, GitHub
 authentication mode, and whether the dev-log worker is enabled. It does not
 expose tokens or read messages.
-```
+
+Run /watch tool:<name> in a channel to opt that channel into future public
+GitHub commit and release updates. Only members with Manage Channels can add
+or remove watches; /watches is available to everyone in the channel. State is
+stored in SUBSCRIPTIONS_STATE_FILE and contains only guild/channel IDs and
+repository names.
 
 ## 🛰️ Scheduled `#dev-log`
 
-Set `DEV_LOG_CHANNEL_ID` to enable a background GitHub poller. Hermes seeds its
-local state on first start, then posts a compact digest only when a tracked
-repository receives new activity; release links are included when available.
+Set `DEV_LOG_CHANNEL_ID` to enable the fixed `#dev-log` digest. Channel
+watches use the same background GitHub poller, so Hermes posts only to channels
+that explicitly opted into a project. Hermes seeds its local state on first
+start, then posts a compact digest only when a tracked repository receives new
+activity; release links are included when available.
 The default interval is one hour (`DEV_LOG_INTERVAL_SECS=3600`). State is kept
 in `.hermes/dev-log-state.json` by default and contains only public GitHub
-timestamps and release tags. Leave the setting unset to keep this feature off.
+timestamps and release tags. Leave the setting unset to keep the fixed digest off.
 
 To get the channel ID in Discord, enable **User Settings → Advanced → Developer
 Mode**, then right-click `#dev-log` and choose **Copy Channel ID**. The bot

@@ -56,7 +56,10 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now hermes.service
 ```
 
-The environment file must contain `DISCORD_TOKEN`, `GITHUB_TOKEN`, and `DEV_LOG_CHANNEL_ID`. Keep it outside the repository and never paste its contents into an issue, commit, or Discord message.
+The environment file must contain `DISCORD_TOKEN`. `GITHUB_TOKEN` is
+recommended for reliable GitHub polling; `DEV_LOG_CHANNEL_ID` is optional
+when using channel watches. Keep the file outside the repository and never
+paste its contents into an issue, commit, or Discord message.
 
 ## Operate Hermes
 

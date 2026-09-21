@@ -4,6 +4,7 @@
 
 mod github;
 mod repos;
+mod subscriptions;
 
 use anyhow::Context as _;
 use poise::serenity_prelude as serenity;
@@ -19,6 +20,7 @@ pub struct Data {
     github_token: Option<String>,
     started_at: Instant,
     dev_log_enabled: bool,
+    subscriptions: subscriptions::Store,
 }
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
@@ -65,6 +67,7 @@ async fn health(ctx: Context<'_>) -> Result<(), Error> {
     } else {
         "disabled"
     };
+    let subscriptions = data.subscriptions.count();
 
     let embed = serenity::CreateEmbed::new()
         .title("🪽 Hermes Watch health")
@@ -72,11 +75,145 @@ async fn health(ctx: Context<'_>) -> Result<(), Error> {
         .field("Uptime", format!("{hours}h {minutes}m {seconds}s"), true)
         .field("GitHub", github_mode, true)
         .field("#dev-log", dev_log, true)
+        .field("Watches", subscriptions.to_string(), true)
         .footer(serenity::CreateEmbedFooter::new(
             "Hermes Watch • minimum access • no message reading",
         ))
         .color(0x35_d07f);
     ctx.send(poise::CreateReply::default().embed(embed)).await?;
+    Ok(())
+}
+
+/// Subscribe the current channel to future updates for one project.
+#[poise::command(slash_command, guild_only, required_permissions = "MANAGE_CHANNELS")]
+async fn watch(
+    ctx: Context<'_>,
+    #[description = "Tool name, e.g. gateflow or agentforge"] tool: String,
+) -> Result<(), Error> {
+    ctx.defer_ephemeral().await?;
+    let Some(guild_id) = ctx.guild_id() else {
+        return Ok(());
+    };
+    let tool_name = tool.trim().to_ascii_lowercase();
+    let Some(repo) = repos::resolve(&tool_name) else {
+        ctx.say(format!(
+            "Unknown tool {tool}. Try one of: {}",
+            repos::names_list()
+        ))
+        .await?;
+        return Ok(());
+    };
+
+    let target = subscriptions::Target::new(guild_id.get(), ctx.channel_id().get());
+    match ctx.data().subscriptions.watch(repo, target) {
+        Ok(true) => {
+            ctx.send(
+                poise::CreateReply::default()
+                    .content(format!(
+                        "✅ This channel now watches {repo}. Hermes will post future public commit and release updates here."
+                    ))
+                    .ephemeral(true),
+            )
+            .await?;
+        }
+        Ok(false) => {
+            ctx.send(
+                poise::CreateReply::default()
+                    .content(format!("ℹ️ This channel already watches {repo}."))
+                    .ephemeral(true),
+            )
+            .await?;
+        }
+        Err(error) => {
+            ctx.send(
+                poise::CreateReply::default()
+                    .content(format!("Could not save that watch: {error}"))
+                    .ephemeral(true),
+            )
+            .await?;
+        }
+    }
+    Ok(())
+}
+
+/// Remove the current channel's subscription for one project.
+#[poise::command(slash_command, guild_only, required_permissions = "MANAGE_CHANNELS")]
+async fn unwatch(
+    ctx: Context<'_>,
+    #[description = "Tool name, e.g. gateflow or agentforge"] tool: String,
+) -> Result<(), Error> {
+    ctx.defer_ephemeral().await?;
+    let Some(guild_id) = ctx.guild_id() else {
+        return Ok(());
+    };
+    let tool_name = tool.trim().to_ascii_lowercase();
+    let Some(repo) = repos::resolve(&tool_name) else {
+        ctx.say(format!(
+            "Unknown tool {tool}. Try one of: {}",
+            repos::names_list()
+        ))
+        .await?;
+        return Ok(());
+    };
+
+    let target = subscriptions::Target::new(guild_id.get(), ctx.channel_id().get());
+    match ctx.data().subscriptions.unwatch(repo, &target) {
+        Ok(true) => {
+            ctx.send(
+                poise::CreateReply::default()
+                    .content(format!("✅ This channel no longer watches {repo}."))
+                    .ephemeral(true),
+            )
+            .await?;
+        }
+        Ok(false) => {
+            ctx.send(
+                poise::CreateReply::default()
+                    .content(format!("ℹ️ This channel was not watching {repo}."))
+                    .ephemeral(true),
+            )
+            .await?;
+        }
+        Err(error) => {
+            ctx.send(
+                poise::CreateReply::default()
+                    .content(format!("Could not save that change: {error}"))
+                    .ephemeral(true),
+            )
+            .await?;
+        }
+    }
+    Ok(())
+}
+
+/// Show the project's subscriptions for the current channel.
+#[poise::command(slash_command, guild_only)]
+async fn watches(ctx: Context<'_>) -> Result<(), Error> {
+    ctx.defer_ephemeral().await?;
+    let Some(guild_id) = ctx.guild_id() else {
+        return Ok(());
+    };
+    let target = subscriptions::Target::new(guild_id.get(), ctx.channel_id().get());
+    let repos = ctx.data().subscriptions.repos_for(&target);
+    let description = if repos.is_empty() {
+        "This channel has no project watches.\n\nA channel manager can use /watch tool:<name> to add one."
+            .to_owned()
+    } else {
+        repos
+            .iter()
+            .map(|repo| format!("• {repo}"))
+            .collect::<Vec<_>>()
+            .join("\n")
+    };
+    let embed = serenity::CreateEmbed::new()
+        .title("📡 Channel watches")
+        .description(description)
+        .footer(serenity::CreateEmbedFooter::new(
+            "Opt-in project updates • public GitHub activity only",
+        ))
+        .color(0x16_dc_ff);
+    ctx.send(poise::CreateReply::default().embed(embed).ephemeral(true))
+        .await?;
     Ok(())
 }
 
@@ -579,21 +716,28 @@ fn save_dev_log_state(path: &Path, state: &DevLogState) {
     }
 }
 
-/// Poll GitHub and publish a compact, stateful digest when #dev-log is enabled.
+/// Poll GitHub and publish a compact digest to the fixed dev-log channel and
+/// explicit project-watch subscriptions.
 async fn dev_log_poll(
     discord_http: Arc<serenity::Http>,
     github_http: reqwest::Client,
     github_token: Option<String>,
-    channel_id: serenity::ChannelId,
+    dev_log_channel: Option<serenity::ChannelId>,
     interval_secs: u64,
     state_path: PathBuf,
+    subscriptions: subscriptions::Store,
 ) {
     let mut state = load_dev_log_state(&state_path);
     let mut first_run = state.repos.is_empty();
 
     loop {
+        if dev_log_channel.is_none() && subscriptions.is_empty() {
+            tokio::time::sleep(Duration::from_secs(interval_secs)).await;
+            continue;
+        }
+
         let mut next_repos = state.repos.clone();
-        let mut changes = Vec::new();
+        let mut changes: Vec<(String, String)> = Vec::new();
 
         for repo in repos::all() {
             let activity =
@@ -640,13 +784,13 @@ async fn dev_log_poll(
 
             if !first_run && (pushed_changed || release_changed) {
                 let mut line = format!("• **{repo}** — {}", activity.html_url);
-                if let Some(release) = latest_release.filter(|_| release_changed) {
+                if let Some(release) = latest_release.as_ref().filter(|_| release_changed) {
                     line.push_str(&format!(
                         " · release {}: {}",
                         release.tag_name, release.html_url
                     ));
                 }
-                changes.push(line);
+                changes.push((repo.to_owned(), line));
             }
         }
 
@@ -655,25 +799,51 @@ async fn dev_log_poll(
             save_dev_log_state(&state_path, &state);
             first_run = false;
         } else if !changes.is_empty() {
-            let omitted = changes.len().saturating_sub(10);
-            changes.truncate(10);
-            if omitted > 0 {
-                changes.push(format!("…and {omitted} more update(s)."));
-            }
-            let content = format!("🛰️ **Cybercore project log**\n{}", changes.join("\n"));
-            match channel_id
-                .send_message(
-                    discord_http.as_ref(),
-                    serenity::CreateMessage::new().content(content),
-                )
-                .await
-            {
-                Ok(_) => {
-                    state.repos = next_repos;
-                    save_dev_log_state(&state_path, &state);
+            if let Some(channel_id) = dev_log_channel {
+                let mut digest = changes
+                    .iter()
+                    .take(10)
+                    .map(|(_, line)| line.clone())
+                    .collect::<Vec<_>>();
+                let omitted = changes.len().saturating_sub(10);
+                if omitted > 0 {
+                    digest.push(format!("…and {omitted} more update(s)."));
                 }
-                Err(error) => eprintln!("dev-log: Discord post failed: {error}"),
+                let content = format!("🛰️ **Cybercore project log**\n{}", digest.join("\n"));
+                if let Err(error) = channel_id
+                    .send_message(
+                        discord_http.as_ref(),
+                        serenity::CreateMessage::new().content(content),
+                    )
+                    .await
+                {
+                    eprintln!("dev-log: Discord post failed: {error}");
+                }
             }
+
+            for (repo, line) in &changes {
+                let content = format!(
+                    "📡 **Project watch: {repo}**\n{line}\n\nOpt-in update from public GitHub activity."
+                );
+                for target in subscriptions.targets_for(repo) {
+                    let channel_id = serenity::ChannelId::new(target.channel_id);
+                    if let Err(error) = channel_id
+                        .send_message(
+                            discord_http.as_ref(),
+                            serenity::CreateMessage::new().content(content.clone()),
+                        )
+                        .await
+                    {
+                        eprintln!(
+                            "watch: Discord post failed for {repo} in channel {}: {error}",
+                            target.channel_id
+                        );
+                    }
+                }
+            }
+
+            state.repos = next_repos;
+            save_dev_log_state(&state_path, &state);
         } else {
             state.repos = next_repos;
             save_dev_log_state(&state_path, &state);
@@ -708,6 +878,11 @@ async fn main() -> Result<(), anyhow::Error> {
         std::env::var("DEV_LOG_STATE_FILE")
             .unwrap_or_else(|_| ".hermes/dev-log-state.json".to_owned()),
     );
+    let subscriptions_state_path = PathBuf::from(
+        std::env::var("SUBSCRIPTIONS_STATE_FILE")
+            .unwrap_or_else(|_| ".hermes/subscriptions.json".to_owned()),
+    );
+    let subscriptions = subscriptions::Store::load(subscriptions_state_path);
     let dev_log_enabled = dev_log_channel.is_some();
 
     let intents = serenity::GatewayIntents::empty();
@@ -715,6 +890,9 @@ async fn main() -> Result<(), anyhow::Error> {
         .options(poise::FrameworkOptions {
             commands: vec![
                 health(),
+                watch(),
+                unwatch(),
+                watches(),
                 status(),
                 releases(),
                 project(),
@@ -729,21 +907,21 @@ async fn main() -> Result<(), anyhow::Error> {
         .setup(move |ctx, _ready, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                if let Some(channel_id) = dev_log_channel {
-                    tokio::spawn(dev_log_poll(
-                        ctx.http.clone(),
-                        reqwest::Client::new(),
-                        github_token.clone(),
-                        channel_id,
-                        dev_log_interval_secs,
-                        dev_log_state_path.clone(),
-                    ));
-                }
+                tokio::spawn(dev_log_poll(
+                    ctx.http.clone(),
+                    reqwest::Client::new(),
+                    github_token.clone(),
+                    dev_log_channel,
+                    dev_log_interval_secs,
+                    dev_log_state_path.clone(),
+                    subscriptions.clone(),
+                ));
                 Ok(Data {
                     http: reqwest::Client::new(),
                     github_token,
                     started_at: Instant::now(),
                     dev_log_enabled,
+                    subscriptions,
                 })
             })
         })
